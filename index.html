@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GitHub Auto Upload</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: #000;
+            color: #fff;
+            overflow-x: hidden;
+            min-height: 100vh;
+            position: relative;
+        }
+
+        /* Efek bintang jatuhan */
+        .stars {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+
+        .star {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background: #fff;
+            border-radius: 50%;
+            animation: fall linear forwards;
+        }
+
+        @keyframes fall {
+            to {
+                transform: translateY(100vh);
+                opacity: 0;
+            }
+        }
+
+        /* Container utama */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Header */
+        header {
+            text-align: center;
+            padding: 40px 0;
+            position: relative;
+        }
+
+        .logo {
+            font-size: 3rem;
+            margin-bottom: 20px;
+            color: #8a2be2;
+            text-shadow: 0 0 10px rgba(138, 43, 226, 0.7);
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            background: linear-gradient(90deg, #8a2be2, #00bfff);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            color: #aaa;
+            margin-bottom: 30px;
+        }
+
+        /* Form login */
+        .login-form {
+            background: rgba(30, 30, 46, 0.7);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 30px;
+            max-width: 500px;
+            margin: 0 auto 40px;
+            box-shadow: 0 0 20px rgba(138, 43, 226, 0.3);
+            border: 1px solid rgba(138, 43, 226, 0.2);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #ddd;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px 15px;
+            border-radius: 8px;
+            border: 1px solid #444;
+            background: rgba(20, 20, 30, 0.8);
+            color: #fff;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #8a2be2;
+            box-shadow: 0 0 10px rgba(138, 43, 226, 0.5);
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 12px 25px;
+            background: linear-gradient(90deg, #8a2be2, #4b0082);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            width: 100%;
+            font-weight: bold;
+        }
+
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(138, 43, 226, 0.4);
+        }
+
+        /* Upload section */
+        .upload-section {
+            background: rgba(30, 30, 46, 0.7);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 40px;
+            box-shadow: 0 0 20px rgba(138, 43, 226, 0.3);
+            border: 1px solid rgba(138, 43, 226, 0.2);
+            display: none;
+        }
+
+        .upload-area {
+            border: 2px dashed #8a2be2;
+            border-radius: 10px;
+            padding: 40px 20px;
+            text-align: center;
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .upload-area:hover {
+            background: rgba(138, 43, 226, 0.1);
+        }
+
+        .upload-area i {
+            font-size: 3rem;
+            color: #8a2be2;
+            margin-bottom: 15px;
+        }
+
+        .file-list {
+            margin-top: 20px;
+        }
+
+        .file-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 15px;
+            background: rgba(20, 20, 30, 0.8);
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+
+        .file-info {
+            display: flex;
+            align-items: center;
+        }
+
+        .file-icon {
+            margin-right: 10px;
+            color: #8a2be2;
+        }
+
+        /* Menu Owner */
+        .owner-menu {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 100;
+        }
+
+        .owner-btn {
+            background: linear-gradient(135deg, #25D366, #128C7E);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            padding: 15px 25px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 5px 15px rgba(37, 211, 102, 0.4);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.3s ease;
+            text-decoration: none;
+        }
+
+        .owner-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(37, 211, 102, 0.6);
+        }
+
+        .owner-btn i {
+            font-size: 1.2rem;
+        }
+
+        /* Footer */
+        footer {
+            text-align: center;
+            padding: 20px 0;
+            color: #777;
+            font-size: 0.9rem;
+            border-top: 1px solid #333;
+            margin-top: 40px;
+        }
+
+        /* Status message */
+        .status-message {
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            text-align: center;
+            display: none;
+        }
+
+        .status-success {
+            background: rgba(46, 204, 113, 0.2);
+            border: 1px solid #2ecc71;
+            color: #2ecc71;
+        }
+
+        .status-error {
+            background: rgba(231, 76, 60, 0.2);
+            border: 1px solid #e74c3c;
+            color: #e74c3c;
+        }
+
+        /* Responsif */
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .login-form, .upload-section {
+                padding: 20px;
+            }
+            
+            .owner-btn {
+                padding: 12px 20px;
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Efek bintang jatuhan -->
+    <div class="stars" id="stars"></div>
+
+    <!-- Menu Owner -->
+    <div class="owner-menu">
+        <a href="https://wa.me/6285786291181" target="_blank" class="owner-btn">
+            <i class="fab fa-whatsapp"></i>
+            Hubungi Owner
+        </a>
+    </div>
+
+    <!-- Konten utama -->
+    <div class="container">
+        <header>
+            <div class="logo">
+                <i class="fab fa-github"></i>
+            </div>
+            <h1>GitHub Auto Upload</h1>
+            <p class="subtitle">Upload file ke GitHub dengan mudah dan cepat</p>
+        </header>
+
+        <!-- Status Message -->
+        <div id="statusMessage" class="status-message"></div>
+
+        <!-- Form login -->
+        <section class="login-form" id="loginForm">
+            <h2 style="text-align: center; margin-bottom: 20px;">Login ke GitHub</h2>
+            <div class="form-group">
+                <label for="username">Username atau Email</label>
+                <input type="text" id="username" placeholder="Masukkan username atau email GitHub Anda">
+            </div>
+            <div class="form-group">
+                <label for="token">Personal Access Token</label>
+                <input type="password" id="token" placeholder="Masukkan GitHub Personal Access Token">
+            </div>
+            <button class="btn" id="loginBtn">Login ke GitHub</button>
+            <p style="text-align: center; margin-top: 15px; font-size: 0.9rem; color: #aaa;">
+                Belum punya token? 
+                <a href="https://github.com/settings/tokens" target="_blank" style="color: #8a2be2; text-decoration: none;">
+                    Buat di sini
+                </a>
+            </p>
+        </section>
+
+        <!-- Upload section (akan ditampilkan setelah login) -->
+        <section class="upload-section" id="uploadSection">
+            <h2 style="text-align: center; margin-bottom: 20px;">Upload File ke GitHub</h2>
+            
+            <div class="upload-area" id="uploadArea">
+                <i class="fas fa-cloud-upload-alt"></i>
+                <h3>Seret file ke sini atau klik untuk memilih</h3>
+                <p>Maksimal 25MB per file</p>
+                <input type="file" id="fileInput" multiple style="display: none;">
+            </div>
+
+            <div class="file-list" id="fileList"></div>
+
+            <div class="form-group">
+                <label for="repoName">Nama Repository</label>
+                <input type="text" id="repoName" placeholder="Masukkan nama repository">
+            </div>
+
+            <div class="form-group">
+                <label for="commitMsg">Pesan Commit</label>
+                <input type="text" id="commitMsg" placeholder="Masukkan pesan commit">
+            </div>
+
+            <button class="btn" id="uploadBtn">Upload ke GitHub</button>
+            
+            <div style="text-align: center; margin-top: 20px;">
+                <button class="btn" id="logoutBtn" style="background: linear-gradient(90deg, #e74c3c, #c0392b); width: auto; padding: 10px 20px;">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </button>
+            </div>
+        </section>
+
+        <footer>
+            <p>GitHub Auto Upload &copy; 2023 - Dibuat dengan Ditozz || Galaxsy<i class="fas fa-heart" style="color: #e74c3c;"></i></p>
+        </footer>
+    </div>
+
+    <script>
+        // Membuat efek bintang jatuhan
+        function createStars() {
+            const starsContainer = document.getElementById('stars');
+            const starCount = 100;
+            
+            for (let i = 0; i < starCount; i++) {
+                const star = document.createElement('div');
+                star.classList.add('star');
+                
+                // Posisi acak
+                const left = Math.random() * 100;
+                const top = Math.random() * -50;
+                
+                // Ukuran acak
+                const size = Math.random() * 3;
+                
+                // Kecepatan jatuh acak
+                const duration = 5 + Math.random() * 10;
+                const delay = Math.random() * 5;
+                
+                star.style.left = `${left}%`;
+                star.style.top = `${top}%`;
+                star.style.width = `${size}px`;
+                star.style.height = `${size}px`;
+                star.style.animationDuration = `${duration}s`;
+                star.style.animationDelay = `${delay}s`;
+                
+                starsContainer.appendChild(star);
+            }
+        }
+
+        // Fungsi untuk menampilkan status message
+        function showStatus(message, type) {
+            const statusElement = document.getElementById('statusMessage');
+            statusElement.textContent = message;
+            statusElement.className = `status-message status-${type}`;
+            statusElement.style.display = 'block';
+            
+            setTimeout(() => {
+                statusElement.style.display = 'none';
+            }, 5000);
+        }
+
+        // Login functionality
+        document.getElementById('loginBtn').addEventListener('click', function() {
+            const username = document.getElementById('username').value;
+            const token = document.getElementById('token').value;
+            
+            if (!username || !token) {
+                showStatus('Harap isi semua field!', 'error');
+                return;
+            }
+            
+            // Simulasi login (dalam implementasi nyata, ini akan memverifikasi dengan GitHub API)
+            // Menyimpan data login (dalam implementasi nyata, gunakan metode yang lebih aman)
+            localStorage.setItem('github_username', username);
+            localStorage.setItem('github_token', token);
+            
+            showStatus('Login berhasil! Mengalihkan...', 'success');
+            
+            // Tunggu sebentar sebelum beralih ke upload section
+            setTimeout(() => {
+                document.getElementById('loginForm').style.display = 'none';
+                document.getElementById('uploadSection').style.display = 'block';
+            }, 1000);
+        });
+
+        // Logout functionality
+        document.getElementById('logoutBtn').addEventListener('click', function() {
+            localStorage.removeItem('github_username');
+            localStorage.removeItem('github_token');
+            
+            showStatus('Logout berhasil!', 'success');
+            
+            // Reset form
+            document.getElementById('username').value = '';
+            document.getElementById('token').value = '';
+            
+            // Kembali ke form login
+            setTimeout(() => {
+                document.getElementById('uploadSection').style.display = 'none';
+                document.getElementById('loginForm').style.display = 'block';
+            }, 1000);
+        });
+
+        // Upload area functionality
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const fileList = document.getElementById('fileList');
+        const uploadBtn = document.getElementById('uploadBtn');
+        
+        let selectedFiles = [];
+        
+        uploadArea.addEventListener('click', () => {
+            fileInput.click();
+        });
+        
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.style.borderColor = '#00bfff';
+            uploadArea.style.backgroundColor = 'rgba(0, 191, 255, 0.1)';
+        });
+        
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.style.borderColor = '#8a2be2';
+            uploadArea.style.backgroundColor = 'transparent';
+        });
+        
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.style.borderColor = '#8a2be2';
+            uploadArea.style.backgroundColor = 'transparent';
+            
+            if (e.dataTransfer.files.length) {
+                handleFiles(e.dataTransfer.files);
+            }
+        });
+        
+        fileInput.addEventListener('change', () => {
+            if (fileInput.files.length) {
+                handleFiles(fileInput.files);
+            }
+        });
+        
+        function handleFiles(files) {
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                
+                // Cek ukuran file (maks 25MB)
+                if (file.size > 25 * 1024 * 1024) {
+                    showStatus(`File ${file.name} terlalu besar. Maksimal 25MB.`, 'error');
+                    continue;
+                }
+                
+                selectedFiles.push(file);
+                displayFile(file);
+            }
+        }
+        
+        function displayFile(file) {
+            const fileItem = document.createElement('div');
+            fileItem.classList.add('file-item');
+            
+            const fileInfo = document.createElement('div');
+            fileInfo.classList.add('file-info');
+            
+            const fileIcon = document.createElement('i');
+            fileIcon.classList.add('file-icon', 'fas');
+            
+            // Tentukan ikon berdasarkan tipe file
+            if (file.type.startsWith('image/')) {
+                fileIcon.classList.add('fa-image');
+            } else if (file.type.includes('pdf')) {
+                fileIcon.classList.add('fa-file-pdf');
+            } else if (file.type.includes('word') || file.type.includes('document')) {
+                fileIcon.classList.add('fa-file-word');
+            } else if (file.type.includes('zip') || file.type.includes('archive')) {
+                fileIcon.classList.add('fa-file-archive');
+            } else {
+                fileIcon.classList.add('fa-file');
+            }
+            
+            const fileName = document.createElement('span');
+            fileName.textContent = file.name;
+            
+            const fileSize = document.createElement('span');
+            fileSize.textContent = formatFileSize(file.size);
+            
+            const removeBtn = document.createElement('button');
+            removeBtn.innerHTML = '<i class="fas fa-times"></i>';
+            removeBtn.style.background = 'none';
+            removeBtn.style.border = 'none';
+            removeBtn.style.color = '#ff4757';
+            removeBtn.style.cursor = 'pointer';
+            removeBtn.style.fontSize = '1rem';
+            
+            removeBtn.addEventListener('click', () => {
+                const index = selectedFiles.indexOf(file);
+                if (index > -1) {
+                    selectedFiles.splice(index, 1);
+                }
+                fileItem.remove();
+            });
+            
+            fileInfo.appendChild(fileIcon);
+            fileInfo.appendChild(fileName);
+            fileItem.appendChild(fileInfo);
+            fileItem.appendChild(fileSize);
+            fileItem.appendChild(removeBtn);
+            
+            fileList.appendChild(fileItem);
+        }
+        
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+        
+        // Upload functionality
+        uploadBtn.addEventListener('click', async function() {
+            const repoName = document.getElementById('repoName').value;
+            const commitMsg = document.getElementById('commitMsg').value;
+            
+            if (!repoName || !commitMsg) {
+                showStatus('Harap isi nama repository dan pesan commit!', 'error');
+                return;
+            }
+            
+            if (selectedFiles.length === 0) {
+                showStatus('Harap pilih file untuk diupload!', 'error');
+                return;
+            }
+            
+            // Simulasi upload (dalam implementasi nyata, ini akan menggunakan GitHub API)
+            uploadBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Mengupload...';
+            uploadBtn.disabled = true;
+            
+            // Simulasi proses upload
+            setTimeout(() => {
+                uploadBtn.innerHTML = '<i class="fas fa-check"></i> Upload Berhasil!';
+                uploadBtn.style.background = 'linear-gradient(90deg, #00b300, #008000)';
+                
+                showStatus('File berhasil diupload ke GitHub!', 'success');
+                
+                // Reset setelah beberapa detik
+                setTimeout(() => {
+                    uploadBtn.innerHTML = 'Upload ke GitHub';
+                    uploadBtn.style.background = 'linear-gradient(90deg, #8a2be2, #4
